@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app-deployment
+  namespace: my-app   # placed in my-app so Fargate profile picks it up
+  labels:
+    app: java-app
+spec:
+  replicas: 3   # 3 replicas on Fargate
+  selector:
+    matchLabels:
+      app: java-app   # links Deployment → Pods
+  template:
+    metadata:
+      labels:
+        app: java-app
+    spec:
+      # No imagePullSecrets needed for ECR — Fargate's pod execution role
+      # has AmazonEKSFargatePodExecutionRolePolicy which grants ECR pull rights.
+      containers:
+        - name: java-mysql-app
+          image: 790400775070.dkr.ecr.ca-central-1.amazonaws.com/aws-java-app:1.0-1   # Jenkins overwrites the tag via 'kubectl set image' on each build
+          ports:
+          - containerPort: 8080
+          env:
+            # Secrets pulled from db-secret.yaml
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret   # must match Secret metadata.name
+                  key: db_user      # must match key in Secret data
+            - name: DB_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db_pwd
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: db_name
+            # Non-sensitive config pulled from db-config.yaml
+            - name: DB_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config    # must match ConfigMap metadata.name
+                  key: db-server     # must match key in ConfigMap data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-app-service
+  namespace: my-app   # service must live in same namespace as the pods it selects
+spec:
+  type: LoadBalancer   # AWS auto-provisions a Classic ELB with a public DNS hostname
+                       # Replaces the NGINX ingress used on minikube — Fargate doesn't play
+                       # nicely with NGINX ingress (no host networking / DaemonSets allowed)
+  selector:
+    app: java-app   # routes traffic to pods with this label
+  ports:
+  - port: 8080      # port the LB listens on
+    targetPort: 8080  # container port

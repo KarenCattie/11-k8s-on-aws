@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config   # name referenced in java-app.yaml
+data:
+  db-server: my-release-mysql-primary.default
+  # ↑ this is the service name from 'kubectl get svc' + namespace
+  # format is: <service-name>.<namespace>
+  # "my-release-mysql-primary" = what you saw in kubectl get svc
+  # "default" = the namespace everything is deployed in

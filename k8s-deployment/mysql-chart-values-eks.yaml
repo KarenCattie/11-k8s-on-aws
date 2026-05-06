@@ -1,0 +1,24 @@
+architecture: replication
+auth:
+  rootPassword: secret-root-pass
+  database: my-app-db
+  username: my-user
+  password: my-pass
+
+primary:
+  persistence:
+    storageClass: gp2     # EKS default StorageClass (EBS-backed)
+
+secondary:
+  # 1 primary and 2 secondary replicas
+  replicaCount: 2
+  persistence:
+    storageClass: gp2     # was "standard" for minikube — gp2 is EKS default
+
+global:
+  security:
+    allowInsecureImages: True
+image:
+  registry: docker.io
+  tag: latest
+  repository: bitnamilegacy/mysql

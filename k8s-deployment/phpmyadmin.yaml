@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpmyadmin
+  labels:
+    app: phpmyadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phpmyadmin   # links Deployment → Pods
+  template:
+    metadata:
+      labels:
+        app: phpmyadmin
+    spec:
+      containers:
+        - name: phpmyadmin
+          image: phpmyadmin/phpmyadmin:5
+          ports:
+            - containerPort: 80
+              protocol: TCP   # K8s defaults to TCP if the leave protocol out, here is explicitly defined for learning purposes
+          env:
+            # Secrets pulled from db-secret.yaml
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret   # must match Secret metadata.name
+                  key: db_root_pass      # must match key in Secret data
+
+            # Non-sensitive config pulled from db-config.yaml
+            - name: PMA_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config    # must match ConfigMap metadata.name
+                  key: db-server     # must match key in ConfigMap data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phpmyadmin-service
+spec:
+  selector:
+    app: phpmyadmin   # routes traffic to pods with this label, matches the pod labels in Deployment above
+  ports:
+    - protocol: TCP
+      port: 8081    # port use to access the SERVICE on
+                    # chosen as 8081 to avoid conflict with
+                    # java-app which uses 8080
+      targetPort: 80    # forwards to port 80 ON the container, where phpMyAdmin actually listens
+
+# No type specified = defaults to ClusterIP
+# ClusterIP = internal only, not exposed externally
+# This is intentional — phpMyAdmin is sensitive
+
+# protocol: TCP     # default — web apps, databases, most things
+# protocol: UDP     # DNS, video streaming, game servers
+# protocol: SCTP    # telecom/networking applications (rare)

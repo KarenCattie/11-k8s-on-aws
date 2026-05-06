@@ -1,0 +1,19 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-cluster
+  region: ca-central-1
+  version: "1.32"
+
+nodeGroups:
+  - name: my-nodes
+    desiredCapacity: 3
+    instanceType: t3.small
+    minSize: 1
+    maxSize: 3
+
+fargateProfiles:
+  - name: my-fargate-profile
+    selectors:
+      - namespace: my-app

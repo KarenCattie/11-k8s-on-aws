@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: java-app-ingress
+
+spec:
+  ingressClassName: nginx   # tells K8s which ingress controller to use, must match the controller you installed
+                            # minikube addon default install NGINX ingress controller
+
+  rules:
+    - host: my-java-app.com
+
+      http:
+        paths:
+          - path: /           # match ALL paths (everything after the domain)
+            pathType: Prefix  # Prefix = /anything matches
+                              # (vs Exact = only /  would match)
+            backend:
+              service:
+                name: java-app-service    # service name from java-app.yaml
+                port:
+                  number: 8080            # service port
