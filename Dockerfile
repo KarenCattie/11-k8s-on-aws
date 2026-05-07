@@ -7,8 +7,9 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY src ./src
 
-# -x test skips tests during the docker build (Jenkins runs tests in its own stage)
-RUN gradle build --no-daemon -x test
+# Run gradle build INCLUDING tests. If tests fail, docker build fails and the Jenkins
+# pipeline fails — so this stage doubles as the test gate.
+RUN gradle build --no-daemon
 
 # ----- Stage 2: tiny runtime image, just the JAR -----
 FROM openjdk:17.0.2-jdk

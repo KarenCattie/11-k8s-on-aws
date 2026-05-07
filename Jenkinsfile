@@ -24,22 +24,13 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                // Run tests inside a gradle container so Jenkins itself doesn't need Java/Gradle.
-                // The "-v ..." mounts your workspace so gradle sees the source code.
-                sh '''
-                    docker run --rm \
-                        -v "$PWD":/app -w /app \
-                        gradle:8.5-jdk17 gradle test --no-daemon
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build & Test Docker Image') {
             when { branch 'main' }
             steps {
-                echo 'Building Docker image (multi-stage handles the Gradle build internally)...'
+                // Tests run INSIDE the multi-stage Dockerfile (gradle build).
+                // If any test fails, gradle build exits non-zero, docker build fails,
+                // and this stage fails — same testing guarantee, no host-mount issues.
+                echo 'Building Docker image (Gradle build + tests run inside the build stage)...'
                 sh "docker build -t ${IMAGE_NAME}:${IMAGE_VERSION} ."
             }
         }
