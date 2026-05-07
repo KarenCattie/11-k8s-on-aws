@@ -4,7 +4,7 @@ pipeline {
     environment {
         AWS_REGION       = 'ca-central-1'
         ECR_REGISTRY     = '790400775070.dkr.ecr.ca-central-1.amazonaws.com'
-        ECR_REPOSITORY   = 'aws-java-app'                                      // create this ECR repo first
+        ECR_REPOSITORY   = 'aws-java-app'
         IMAGE_NAME       = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
         EKS_CLUSTER      = 'my-cluster'
         K8S_NAMESPACE    = 'my-app'
